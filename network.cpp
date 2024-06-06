@@ -12,8 +12,7 @@ int main(){
     load_network_struct (f, R); // cargo todos los datos de manera ordenada en la estrucura
     menu(f, R);
 
-    //libero memoria y cierro los archivos
-    for (int i = 0; i < count; ++i){
+    for (int i = 0; i < count; ++i){     //libero memoria y cierro los archivos
         delete[] R[i].LLD_ID;
     }
     delete []R;

@@ -1,13 +1,5 @@
 #include "network_lib.h"
-/**
- * @brief Cuenta el número total de dispositivos en el archivo.
- * 
- * Esta función lee el archivo y cuenta el número de headers en el archivo. 
- * Restablece el puntero del archivo al principio después de contar (rewid(f)).
- * 
- * @param f  Manipulador asociado al archivo network_structure.dat.
- * @return  El número de dispositivos totales en el archivo.
- */
+
 int Count_Devices(FILE *f){
     int count=0;
     uint64_t header;
@@ -23,15 +15,7 @@ int Count_Devices(FILE *f){
     rewind(f);
     return count;
 }
-/**
- * @brief Carga y muestra los IDs de cada dispositivo en la estructura.
- * 
- * Esta función lee los IDs del archivo y los almacena en la estructura Registro. 
- * Omite los demas datos del dispositivo que no son necesarios para esta función.
- * 
- * @param f Manipulador asociado al archivo network_structure.dat.
- * @param R Puntero a los registros cargados en la estructura registro.
- */
+
 void showIDs(FILE *f, Registro *R){
     int count = 0;
     uint16_t LLDC;
@@ -48,14 +32,7 @@ void showIDs(FILE *f, Registro *R){
     //}
     rewind(f);
 }
-/**
- * @brief Carga la estructura registro con datos del archivo.
- * 
- * Esta función lee los datos del archivo y los carga en la estructura donde corresponde para su posterior lectura.
- * Asigna memoria dinámicamente para los IDs de los dispositivos de nivel inferior (LLD_ID) segundo el header.
- * @param f Manipulador asociado al archivo network_structure.dat.
- * @param R Puntero a los registros cargados en la estructura registro.
- */
+
 void load_network_struct (FILE *f, Registro *R){ 
     uint16_t ID;
     int count=0;
@@ -93,42 +70,32 @@ void load_network_struct (FILE *f, Registro *R){
     rewind(f);
 }
 
-/**
- * @brief Muestra la estructura de cada dispositivo conectado a la red.
- *  Esta función muestra el ID, ID del dispositivo conectado en la parte superior, que tipo de dispositivo, etc, cada dispositivo en la red. 
- * 
- * @param f Manipulador asociado al archivo network_structure.dat.
- * @param R Puntero a los registros cargados en la estructura registro.
- */
 void show_network(FILE *f, Registro *R){
     int count= Count_Devices(f);
     for(int i=0; i<count; i++){
         printf("\n ID: %u", R[i].ID);
-        if(R[i].LLD_COUNT == 0){
-            printf("\n Lower Level Devices Count: %u", R[i].LLD_COUNT);
-        } else{
-            printf("\n Lower Level Devices Count: %u", R[i].LLD_COUNT);
-        }
+        printf("\n Lower Level Devices Count: %u", R[i].LLD_COUNT);
         printf("\n Upper Level Device ID: %u", R[i].ULD_ID);
+         // Determinar el tipo de dispositivo y mostrar información correspondiente
         if(R[i].DT_value==0){
-            printf("\n Device Type: CPU \t(%u)", R[i].DT.CPU_OR_CONCENTRATOR);
+            printf("\n Device Type: \tCPU ", R[i].DT.CPU_OR_CONCENTRATOR);
         } else if(R[i].DT_value==3){
-            printf("\n Device Type: Concentrator \t(%u)", R[i].DT.CPU_OR_CONCENTRATOR);
+            printf("\n Device Type: \tConcentrator ", R[i].DT.CPU_OR_CONCENTRATOR);
         }else if(R[i].DT_value==1){ //PREGUNTO SI ES SENSOR
             if(R[i].DT.SENSOR.TYPE==0){ 
-                printf("\n Device Type : Flow Sensor \t(%u)", R[i].DT.SENSOR.TYPE);
+                printf("\n Device Type : \tFlow Sensor ", R[i].DT.SENSOR.TYPE);
             } else if ( R[i].DT.SENSOR.TYPE==1){
-                printf("\n Device Type: Sensor Temp  \t(%u)", R[i].DT.SENSOR.TYPE);
+                printf("\n Device Type: \tSensor Temp  ", R[i].DT.SENSOR.TYPE);
             }else if (R[i].DT.SENSOR.TYPE==2){
-                printf("\n Device Type: Presure Sensor  \t(%u)", R[i].DT.SENSOR.TYPE);
+                printf("\n Device Type: \tSensor Presure  ", R[i].DT.SENSOR.TYPE);
             }else if (R[i].DT.SENSOR.TYPE==3){
-                printf("\n Device Type: Level Sensor  \t(%u)", R[i].DT.SENSOR.TYPE);
+                printf("\n Device Type: \tSensor Level  ", R[i].DT.SENSOR.TYPE);
             }
         }else if (R[i].DT_value==2){
             if(R[i].DT.ACTUATOR.TYPE==0){
-                printf("\n Device Type: Electro Valvula \t(%u)", R[i].DT.ACTUATOR.TYPE);
+                printf("\n Device Type: \tElectro Valvula ", R[i].DT.ACTUATOR.TYPE);
             }else if(R[i].DT.ACTUATOR.TYPE==1){
-                printf("\n Device Type: Electro Motor  \t(%u)", R[i].DT.ACTUATOR.TYPE);
+                printf("\n Device Type: \tElectro Motor  ", R[i].DT.ACTUATOR.TYPE);
             }
         }
         if(R[i].LLD_COUNT!=0){
@@ -143,71 +110,54 @@ void show_network(FILE *f, Registro *R){
     }
     rewind(f);
 }
-/**
- * @brief Realiza una búsqueda lineal de un ID en los registros.
- * 
- * @param R Puntero a los registros cargados en la estructura registro.
- * @param size_struct Tamaño de la estructura de registros.
- * @param ID ID a buscar.
- * @return int La posición del ID en la estructura o -1 si no se encuentra.
- */
-int busqueda_lineal(Registro *R, int size_struct, uint64_t ID) { //uso una busqueda lineal pensando en que no tengo la estructura ordenada y ni ganas de ordenarla jaja
+
+int busqueda_lineal(FILE *f, Registro *R, uint16_t ID) { //uso una busqueda lineal pensando en que no tengo la estructura ordenada y ni ganas de ordenarla jaja
+    int size_struct = Count_Devices(f);
     for (int i = 0; i < size_struct; ++i) {
         if (R[i].ID == ID) {
-            return i;  // ID encontrado en la posición i y la retorno
+            return i;  // termina la funcion cuando encuentre el ID y retorna la posicion ( la variable 'i')
         }
     }
-    return -1;  // ID no encontrado
+    return -1;  // si el ID no se encuentra, retorna un -1
 }
-/**
- * @brief Valida el ID ingresado si este está en los registros.
- * 
- * @param f Manipulador asociado al archivo network_structure.dat.
- * @param R Puntero a los registros cargados en la estructura registro.
- * @return uint16_t El ID validado.
- */
-uint16_t validate_ID(FILE *f, Registro *R) {  //este lo uso para verificar si el ID que ingrese el usuario esta dentro de la estructura 
-    int size_struct = Count_Devices(f);
+
+uint16_t validate_ID(FILE *f, Registro *R) {  //este lo uso para que el usuario ingrese un ID y verificar si el ID que ingreso el usuario esta dentro de la estructura 
+    int size_struct = Count_Devices(f); //llamo al tamaño de la estructura
     uint16_t ID;
     int index;
     do {
         printf("\n Enter ID: ");
         //printf("\n Ingrese un ID");
         scanf("%d", &ID);
-        index = busqueda_lineal(R, size_struct, ID);
-        if (index == -1) {
+        index = busqueda_lineal(f, R, ID);
+        if (index == -1) { //si busqueda lineal retorna un -1 entra en el if()
             printf("\n ID not found. Please enter a valid ID\n");
             //printf("\n ID no encontrado. Por favor ingrese un ID valido.");
         }
     } while (index == -1); //va a buclear hasta que el usuario ingrese un ID correcto
-    return ID;
+    return ID; //validate ID retorna el ID que sí se encuentra en la estructura.
 }
-/**
- * @brief Encuentra la secuencia de conexiones de un ID ingresado por el usuario hasta el nivel superior (ID 65535).
- * 
- * @param f Manipulador asociado al archivo network_structure.dat.
- * @param R Puntero a los registros cargados en la estructura registro.
- */
-void find_my_ID(FILE *f, Registro *R) {
+
+void ID_Connection_Sequence(FILE *f, Registro *R) { 
     int size_struct = Count_Devices(f); // Tamaño de la estructura
     uint16_t ID = validate_ID(f, R);  // llamo al procedimiento para verificar si el ID ingresado es correcto
-    int Pos = busqueda_lineal(R, size_struct, ID); //extraigo la posicion del ID el cual sé que es correcto para comenzar a operar
+    int Pos = busqueda_lineal(f, R, ID); //extraigo la posicion del ID el cual sé que es correcto para comenzar a operar
     int v_size = 0; //tamaño del vector que voy a usar para guardar los ID encontrados
 
     // Bucle para determinar el tamaño del vector de ID's
     while (R[Pos].ULD_ID != 65535) {  //bucleo hasta llegar al ID invalido
         v_size++;                     //aumento el tamaño del vector que almacena los ID's en cada vuelta
-        Pos = busqueda_lineal(R, size_struct, R[Pos].ULD_ID);
+        Pos = busqueda_lineal(f, R, R[Pos].ULD_ID); //En vez de mandar como tercer parametro directamente el ID mando el Upper level Device ID (el ID del dispositivo que esta arriba) para saber su posicion.
         if (Pos == -1) {
             break; // salgo del bucle con un break
         }
     }
     // Asignar memoria para el vector 
     int *v = new int[v_size + 1]; // +1 para incluir el ID de nivel superior
-    Pos = busqueda_lineal(R, size_struct, ID);
+    Pos = busqueda_lineal(f, R, ID);
     for (int i = 0; i <= v_size; ++i) {
         v[i] = R[Pos].ID;
-        Pos = busqueda_lineal(R, size_struct, R[Pos].ULD_ID);
+        Pos = busqueda_lineal(f, R, R[Pos].ULD_ID);
     }
     printf("\n");
     // Imprimir la cadena
@@ -218,39 +168,81 @@ void find_my_ID(FILE *f, Registro *R) {
         }
     }
     printf("\n");
-
     delete[] v; // Libero la memoria del vector en el cual almacene la secuencia de ID's
 }
-/**
- * @brief Muestra el menú para que el usuario elija entre ver todos los registros o buscar una ID.
- * 
- * @param f Manipulador asociado al archivo network_structure.dat.
- * @param R Puntero a los registros cargados en la estructura registro.
- */
+
+void print_Register(Registro *R) {
+    printf("\n ID: %u", R->ID);  // Segun chat: En C++, cuando tenes un puntero a una estructura, se usa -> para acceder a las partes de una estructura. El operador '.' se usa para acceder a los miembros de una estructura cuando tienes una instancia directa de la estructura (la posicion)
+    printf("\n Lower Level Devices Count: %u", R->LLD_COUNT); //si debaja los R.LLD_COUNT con un punto en vez de R->LLD_COUNT me procude errores.
+    printf("\n Upper Level Device ID: %u", R->ULD_ID);
+
+    if (R->DT_value == 0) {
+        printf("\n Device Type: \tCPU ");
+    } else if (R->DT_value == 3) {
+        printf("\n Device Type: \tConcentrator ", R->DT.CPU_OR_CONCENTRATOR);
+    } else if (R->DT_value == 1) { // PREGUNTO SI ES SENSOR
+        if (R->DT.SENSOR.TYPE == 0) {
+            printf("\n Device Type : \tFlow Sensor ");
+        } else if (R->DT.SENSOR.TYPE == 1) {
+            printf("\n Device Type: \tSensor Temp  ");
+        } else if (R->DT.SENSOR.TYPE == 2) {
+            printf("\n Device Type: \tPressure Sensor  ");
+        } else if (R->DT.SENSOR.TYPE == 3) {
+            printf("\n Device Type: \tLevel Sensor  ");
+        }
+    } else if (R->DT_value == 2) {
+        if (R->DT.ACTUATOR.TYPE == 0) {
+            printf("\n Device Type: \tElectro Valve ");
+        } else if (R->DT.ACTUATOR.TYPE == 1) {
+            printf("\n Device Type: \tElectro Motor  ");
+        }
+    }
+    if (R->LLD_COUNT != 0) {
+        for (int j = 0; j < R->LLD_COUNT; j++) {
+            printf("\n Lower Level Device ID: %u", R->LLD_ID[j]);
+        }
+    } else {
+        printf("\n Don't have any devices on the lower level.");
+    }
+    printf("\n\n");
+}
+
+Registro getRegister(FILE *f, Registro *R, uint16_t ID) {
+    int index = busqueda_lineal(f, R, ID); // Buscar el ID en la estructura
+    return R[index]; // Retornar la estructura completa del registro en la posicion del ID seleccionado por el usuario.
+}
+
 void menu(FILE *f, Registro *R) {
     int value;
     do {
         printf("\n \t Menu ");
         printf("\n Enter 1 to view each record of all devices in the network.");
-        printf("\n Enter 2 to view the connection sequence of a specific ID.");
+        printf("\n Enter 2 to get a full registry from one ID.");
+        printf("\n Enter 3 to view the connection sequence of a specific ID.");
         printf("\n Enter 0 to exit.");
         printf("\n Your option: ");
         /*
         printf("\n Ingrese 1 para ver cada registro de todos los dispositivos en la red.");
-        printf("\n Ingrese 2 para ver la secuencia de conexión de un ID específico.");
+        printf("\n Ingrese 2 para obtener un registro completo de una ID.");
+        printf("\n Ingrese 3 para ver la secuencia de conexión de un ID específico.");
         printf("\n Ingrese 0 para salir.");
         printf("\n Su opcion: ");
         */
         scanf("%d", &value);
 
-        if (value != 1 && value != 2 && value != 0) {
+        if (value < 0 || value > 3) {
             printf("\n\n Please enter a valid option.\n");
             //printf("\n\n Por favor ingrese una opcion valida.\n")
         }
         if (value == 1) {
             show_network(f, R);
-        } else if (value == 2) {
-            find_my_ID(f, R);
-    }
+        }else if (value == 2){
+            int size_struct = Count_Devices(f);  //extraigo el tamaño de la estructura
+            uint16_t ID = validate_ID(f, R);     // valido el ID que ingrese el usario
+            Registro reg_aux = getRegister(f, R, ID);//Hago una estructura auxiliar para poder almacenar la estructura retornada por la función de tipo estructura getRegister
+            print_Register(&reg_aux); //muestro el registro del ID solicitado enviandon como parametro solo la estructura retornada de getRegister.
+        }else if (value == 3) {
+            ID_Connection_Sequence(f, R);
+        }
     } while (value != 0); 
 }
